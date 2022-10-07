@@ -1,0 +1,110 @@
+import nu.studer.gradle.jooq.JooqEdition
+import nu.studer.gradle.jooq.JooqExtension
+
+plugins {
+	id 'org.springframework.boot' version '2.6.13-SNAPSHOT'
+	id 'io.spring.dependency-management' version '1.0.14.RELEASE'
+	id 'java'
+	id 'nu.studer.jooq' version '6.0.1'  // gradle-jooq-plugin
+}
+
+group = 'com.example'
+version = '0.0.1-SNAPSHOT'
+sourceCompatibility = '11'
+
+configurations {
+	compileOnly {
+		extendsFrom annotationProcessor
+	}
+}
+
+repositories {
+	mavenCentral()
+	maven { url 'https://repo.spring.io/milestone' }
+	maven { url 'https://repo.spring.io/snapshot' }
+}
+
+dependencies {
+	implementation 'org.springframework.boot:spring-boot-starter-data-elasticsearch'
+	implementation 'org.springframework.boot:spring-boot-starter-data-r2dbc'
+	implementation 'org.springframework.boot:spring-boot-starter-webflux'
+	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+	implementation 'io.netty:netty-resolver-dns-native-macos:4.1.82.Final:osx-aarch_64'
+	implementation 'org.springframework.boot:spring-boot-starter-jooq'
+	implementation 'io.projectreactor.tools:blockhound:1.0.6.RELEASE'
+
+	compileOnly 'org.projectlombok:lombok'
+	developmentOnly 'org.springframework.boot:spring-boot-devtools'
+	runtimeOnly 'dev.miku:r2dbc-mysql'
+	runtimeOnly 'mysql:mysql-connector-java'
+	annotationProcessor 'org.projectlombok:lombok'
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	testImplementation 'io.projectreactor:reactor-test'
+	jooqGenerator('mysql:mysql-connector-java:8.0.25')
+}
+
+def extension = jooq {
+	//version = '3.15.1'  // default (can be omitted)
+	edition = JooqEdition.OSS  // default (can be omitted)
+
+	configurations {
+		main {  // name of the jOOQ configuration
+			generateSchemaSourceOnCompilation = true  // default (can be omitted)
+
+			generationTool {
+
+				logging = 'WARN' // TRACE, DEBUG, INFO, WARN, ERROR, FATAL
+				onError = 'LOG'  // FAIL, LOG, SILENT
+
+				jdbc {
+					driver = 'com.mysql.cj.jdbc.Driver'
+					url = 'jdbc:mysql://localhost:3306/jh_db'
+					user = 'root'
+					password = 'wlgud12'
+					properties {
+						property {
+							key = 'ssl'
+							value = 'true'
+						}
+					}
+				}
+
+				generator {
+					name = 'org.jooq.codegen.DefaultGenerator'
+					strategy {
+						// org.jooq.codegen.KeepNamesGeneratorStrategy - DB 네이밍 유지: 언더바, 대소문자 등... 기본값은 PascalCaseNames
+						name = 'org.jooq.codegen.DefaultGeneratorStrategy'
+					}
+					database {
+						// https://www.jooq.org/doc/3.15/manual/code-generation/codegen-advanced/codegen-config-database/codegen-database-name/
+						name = 'org.jooq.meta.mysql.MySQLDatabase'
+						inputSchema = 'portal'
+
+						includes = '.*' // 정규표현식
+						excludes = 'test_.* | temp_.*'
+					}
+					generate {
+						generatedSerialVersionUID = 'CONSTANT'
+						javaTimeTypes = true    // java.time.*
+
+						deprecated = false
+						records = true
+						immutablePojos = true
+						fluentSetters = true
+					}
+					target {
+						// packageName = 'nu.studer.sample'
+						packageName = 'com.example.demo'
+						// directory = 'build/generated-src/jooq/main'  // default (can be omitted)
+						directory = 'build/generated-src/jooq/main'  // default (can be omitted)
+					}
+				}
+			}
+		}
+	}
+}
+extension
+
+tasks.named('test') {
+	useJUnitPlatform()
+}

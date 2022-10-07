@@ -1,0 +1,23 @@
+spring:
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    username: j
+    url: jdbc:mysql://127.0.0.1:3306/jh_db?allowPublicKeyRetrieval=true&useTimezone=true&serverTimezone=Asia/Seoul&characterEncoding=UTF-8&useSSL=false
+    password: 'password'
+  r2dbc:
+    password: 'wlgud12'
+    url: r2dbc:mysql://localhost:3306/jh_db?useUnicode=true&characterEncoding=utf8
+    username: root
+
+logging:
+  level:
+    org:
+      springframework:
+        data:
+          r2dbc: DEBUG
+      hibernate:
+        type:
+          descriptor:
+            sql:
+              BasicBinder: TRACE
+        SQL: DEBUG
